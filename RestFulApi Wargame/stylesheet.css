@@ -1,0 +1,99 @@
+h1{
+	color: #0074D9;
+	font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+}
+
+h2{
+	border: 0px;
+	color: #4EB1BA;
+	font-family: "Times New Roman", Times, serif;
+}
+		
+table{
+	border-collapse: collapse;
+}
+
+td img{
+	height: 24px;
+	width: 24px;
+}		
+
+#currentScore, #currentTime, #currentStatus{
+	width: 90px;
+}
+
+#setupBoxes, #setupDimensions, #setupMonsters, #setupMegaMonsters{
+	width: 92px;
+}
+
+
+#highScores{
+	border:2px solid #0074D9;
+	border-radius: 25px;
+	padding: 8px;
+	margin-left: 38%;
+	margin-right: 38%;
+	background: #DFEBF3;
+}
+
+#loginForm{
+	border:2px solid #0074D9;
+	border-radius: 25px;
+	padding: 8px;
+	margin-left: 35%;
+	margin-right: 35%;
+	background: #DFEBF3;
+}
+
+#optionsForm{
+	border:2px solid #0074D9;
+	border-radius: 25px;
+	padding: 8px;
+	margin-left: 5%;
+	margin-right: 5%;
+	background: #DFEBF3;
+}
+
+#profileForm{
+	border:2px solid #0074D9;
+	border-radius: 25px;
+	padding: 8px;
+	margin-left: 30%;
+	margin-right: 30%;
+	background: #DFEBF3;
+}
+
+#menuForm{
+	border:2px solid #0074D9;
+	border-radius: 25px;
+	padding: 8px;
+	margin-left: 38%;
+	margin-right: 38%;
+	background: #DFEBF3;
+}
+
+#registerForm{
+	border:2px solid #0074D9;
+	border-radius: 25px;
+	padding: 8px;
+	margin-left: 30%;
+	margin-right: 30%;
+	background: #DFEBF3;
+}
+
+#userInterface{
+	border:2px solid #0074D9;
+	padding: 8px;
+	margin-left: 5%;
+	margin-right: 5%;
+	background: #DFEBF3;
+}
+
+#stage td{
+	border: 1px solid black;
+}
+
+#optionsTable td, th{
+	text-align: center;
+	vertical-align: middle;
+}

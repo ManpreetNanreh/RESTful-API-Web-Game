@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta HTTP-EQUIV="EXPIRES" CONTENT="-1">
+		<title>Warehouse Wars Game</title>
+		<link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+		<script language="javascript" src="jquery-3.2.1.js" > </script>
+		<script language="javascript" src="ww.js" > </script>
+		<script language="javascript" src="user.js" > </script>
+		<script language="javascript" src="gamecontrol.js" > </script>
+		<script>
+			// This allows to only show the login page when the user visits for the first time.
+			// We also require user to authenticate themselves when they refresh the page.
+			$(document).ready(function(){
+				showHideDiv("loginDIV");
+				getTopHighscores();
+			});
+
+			userObject=null;
+			
+			// This function allows us to show and hide specific divs.
+			function showHideDiv(div){
+				$(document).find("div").each(function(){
+					if($(this).attr("id") == div){
+						$(this).show();
+					}else{
+						$(this).hide();
+					}
+				})
+			}
+			
+			// This function allows us to show and hide specific divs that are pairs.
+			function showHideDivPairs(div){
+				$(document).find("div").each(function(){
+					if($(this).attr("id") == "gameDIV" || $(this).attr("id") == "stage"){
+						$(this).show();
+					}else{
+						$(this).hide();
+					}
+				})
+			}
+
+			//Check if user left any fields empty and everything the way we want it
+			function validateRegisterForm(){
+				let emptyFields = [];
+
+				if(document.forms["registerForm"]["userRName"].value === ""){
+					emptyFields.push("Username is Empty");
+				}
+				if(document.forms["registerForm"]["userRPass"].value === ""){
+					emptyFields.push("Password is Empty");
+				}
+				if(document.forms["registerForm"]["confirmUserRPass"].value === ""){
+					emptyFields.push("Confirm Password is Empty");
+				}
+				if(document.forms["registerForm"]["rFirstName"].value === ""){
+					emptyFields.push("First Name is Empty");
+				}
+				if(document.forms["registerForm"]["rLastName"].value === ""){
+					emptyFields.push("Last Name is Empty");
+				}
+				if(document.forms["registerForm"]["rEmail"].value === ""){
+					emptyFields.push("Email is Empty");
+				}
+				if(document.forms["registerForm"]["rConfirmEmail"].value === ""){
+					emptyFields.push("Confirm Email is Empty");
+				}
+				if(!(document.forms["registerForm"]["userRPass"].value === 
+					document.forms["registerForm"]["confirmUserRPass"].value)) {
+					emptyFields.push("Password and Confirm Password do not match");
+				}
+				if(!(document.forms["registerForm"]["rEmail"].value === 
+					document.forms["registerForm"]["rConfirmEmail"].value)) {
+					emptyFields.push("Email and Confirm Email do not match");
+				}
+
+				if(emptyFields.length > 0){
+					s='<table>';
+
+					for(let i=0; i<emptyFields.length; i++){
+						s+='<tr> <td>';
+						s+= emptyFields[i];
+						s+= '</td> </tr>';
+					}
+					s+='</table>';
+					document.getElementById("emptyRegisterField").innerHTML = s;
+					return false;
+				}else
+				return true;
+			}
+
+			//Check if the user left any fields empty and entered everything properly.
+			function validateProfileForm(){
+				let updateFields = {};
+				let emptyFields;
+
+				updateFields['username'] = userObject.getUserName();
+				
+				if(!(document.forms["profileForm"]["userPPass"].value === "")){
+					updateFields['userpass'] = document.forms["profileForm"]["userPPass"].value;
+				}
+				if(!(document.forms["profileForm"]["pFirstName"].value === "")){
+					updateFields['firstname'] = document.forms["profileForm"]["pFirstName"].value;
+				}
+				if(!(document.forms["profileForm"]["pLastName"].value === "")){
+					updateFields['lastname'] = document.forms["profileForm"]["pLastName"].value;
+				}
+				if(!(document.forms["profileForm"]["pEmail"].value === "")){
+					updateFields['email'] = document.forms["profileForm"]["pEmail"].value;
+				}
+
+				if(!(document.forms["profileForm"]["userPPass"].value === 
+					document.forms["profileForm"]["confirmUserPPass"].value)) {
+					emptyFields = "Password and Confirm Password do not match.";
+				}
+
+				updateFields["allowOrNot"] = 0;
+
+				if(emptyFields != undefined){
+					updateFields["allowOrNot"] = 1;
+					s='<table>';
+					s+='<tr> <td>';
+					s+= emptyFields;
+					s+= '</td> </tr>';
+					s+='</table>';
+					document.getElementById("emptyProfileField").innerHTML = s;
+				}
+				return updateFields;
+			}
+
+			//Checks if the user entered the information on the LogIN page.
+			function validateLogin(){
+				let emptyFields = [];
+
+				if(document.forms["loginForm"]["userLName"].value === ""){
+					emptyFields.push("Username is Empty");
+				}
+
+				if(document.forms["loginForm"]["userLPass"].value === ""){
+					emptyFields.push("Password is Empty");
+				}
+		
+				if(emptyFields.length > 0){
+					s='<table>';
+
+					for(let i=0; i<emptyFields.length; i++){
+						s+='<tr> <td>';
+						s+= emptyFields[i];
+						s+= '</td> </tr>';
+					}
+					s+='</table>';
+					document.getElementById("emptyLogin").innerHTML = s;
+					return false;
+				}else
+				return true;
+			}
+			
+			//Making the user object when they log in.
+			function createLoginUserObject(username, userpass){
+				userObject = new User(username, userpass);
+				getUserInfoFromBackend();
+			}
+
+			function getUserInfoFromBackend(){
+				$.ajax({
+					method: "GET",
+					url: "api/api.php",
+					data: {"id": $("#userLName").val(), "userpass": $("#userLPass").val(), "type": 1 },
+					success: function(response, status, xhr){
+						//Set the missing data from user object.
+						userObject.setFName(response["firstname"]);
+						userObject.setLName(response["lastname"]);
+						userObject.setUserEmail(response["email"]);
+					},
+					error: function(response, status, xhr){
+						//Blank
+					}
+				});
+			}
+
+			function createRegisterUserObject(username, userpass){
+				userObject = new User(username, userpass);
+				userObject.setFName($("#rFirstName").val());
+				userObject.setLName($("#rLastName").val());
+				userObject.setUserEmail($("#rEmail").val());
+			}
+
+			//Update the existing user object with new information
+			function updateUserObject(params){
+				for(key in params){
+					if(key == "userpass"){
+						userObject.setUserPass(params[key]);
+					}
+					if(key == "firstname"){
+						userObject.setFName(params[key]);
+					}
+					if(key == "lastname"){
+						userObject.setLName(params[key]);
+					}
+					if(key == "email"){
+						userObject.setUserEmail(params[key]);
+					}
+				}
+			}
+
+			//Attempty to register the user.
+			function registerUser(){
+				$.ajax({
+					method: "PUT",
+					url: "api/api.php",
+					data: { "id":  $("#userRName").val(), "userpass": $("#userRPass").val(), 
+					"firstname": $("#rFirstName").val(), "lastname": $("#rLastName").val(),
+					"email": $("#rEmail").val() },
+					success: function(response, status, xhr){
+						//chr initial request
+						//data.status upon failing return code
+						//xhr.status upon success return code
+						//console.log("server protocol: " + xhr.status);
+						//console.log("id: "+response["id"]);
+
+						//Create user object
+						createRegisterUserObject($("#userRName").val(),$("#userRPass").val());
+						showHideDiv("menuDIV");
+					},
+					error: function(response, status, xhr) {
+						//console.log("Status: " + status); 
+						//console.log("Error: " + xhr);
+						//console.log("server protocol: "+response.status);
+						document.getElementById("emptyRegisterField").innerHTML = "Username already exists";
+						showHideDiv("registerDIV");
+					}
+				});
+			}
+
+			// Attempt to register a new score
+			function registerScore(){
+				$.ajax({
+					method: "PUT",
+					url: "api/api.php",
+					data: {"userid": userObject.getUserName(), "userpass": userObject.getUserPass(), "currentScore": userScore, 
+					"type": 1},
+					success: function(response, status, xhr){
+					},
+					error: function(response, status, xhr) {
+					}
+				});
+			}
+
+			//Check if the user enters correct login information.
+			function verifyLogIn(){
+				$.ajax({
+					method: "GET",
+					url: "api/api.php",
+					data: {"id": $("#userLName").val(), "userpass": $("#userLPass").val(), "type": 0 },
+					success: function(response, status, xhr){
+						//Create user object.
+						document.getElementById("emptyLogin").innerHTML = "";
+						createLoginUserObject($("#userLName").val(), $("#userLPass").val());
+						showHideDiv("menuDIV");
+					},
+					error: function(response, status, xhr){
+						document.getElementById("emptyLogin").innerHTML = "Username or Password is invalid.";
+						showHideDiv("loginDIV");
+					}
+				});
+			}
+
+			//Update user information in database.
+			function updateUserInfo(params){
+				$.ajax({
+					method: "POST",
+					url: "api/api.php",
+					data: params,
+					success: function(response, status, xhr){
+						//blank
+					},
+					error: function(response, status, xhr){
+						//blank
+					}
+				});
+			}
+
+			//Delete the user from database.
+			function deleteUser(){
+				$.ajax({
+					method: "DELETE",
+					url: "api/api.php",
+					data: {"username": userObject.getUserName(), "userpass": userObject.getUserPass()},
+					success: function(response, status, xhr){//blank
+					},
+					error: function(response, status, xhr){//blank
+					}
+				});
+			}
+			
+			//Get top 10 highscores for the login Page
+			function getTopHighscores(){
+				$.ajax({
+					method: "GET",
+					url: "api/api.php",
+					data: {"type": 2},
+					success: function(response){
+						highscoreString = "<tr><th>Rank: </th><th>User: </th><th>Score: </th></tr>";
+
+						for(let i=0; i<response.length; i++){
+							let rank = i+1;
+							highscoreString+='<tr>';
+							highscoreString+= '<td>' + rank + '. </td>';
+							highscoreString+= '<td>' + response[i].username + '</td>';
+							highscoreString+= '<td>' + response[i].score + '</td>';
+							highscoreString+= '</tr>';
+						}
+						document.getElementById("mainPageTable").innerHTML = highscoreString;
+					}, 
+					error: function(response, status, xhr){
+						console.log("Did not get high scores");
+					}
+				});
+			}
+
+
+			$(function(){
+				//Showing and hiding specific divs depending on which button was pressed.
+				$('#goToRegisterFormButton').on('click',function(){
+					document.getElementById("emptyLogin").innerHTML = "";
+					showHideDiv("registerDIV");
+				});
+				
+				$('#backButton').on('click',function(){ 
+					document.getElementById("emptyRegisterField").innerHTML = "";
+					showHideDiv("loginDIV");
+				});
+				
+				$('#registerButton').on('click',function(){ 
+					//Check if same pass and confirm pass, check if same email and confirm email
+					if(validateRegisterForm()){
+						//Check in database if user and call registerUser
+						registerUser();
+					}else{
+						showHideDiv("registerDIV");
+					}
+				});
+				
+				$('#loginButton').on('click',function(){
+					if(validateLogin()){
+						verifyLogIn();
+					}else{
+						showHideDiv("loginDIV");
+					}
+				});
+				
+				$('#profileButton').on('click',function(){
+					document.forms["profileForm"]["userPName"].value = userObject.getUserName();
+					document.forms["profileForm"]["userPPass"].value = userObject.getUserPass();
+					document.forms["profileForm"]["pFirstName"].value = userObject.getFName();
+					document.forms["profileForm"]["pLastName"].value = userObject.getLName();
+					document.forms["profileForm"]["pEmail"].value = userObject.getUserEmail();
+					showHideDiv("profileDIV");
+				});
+
+				$('#updateButton').on('click', function(){
+					let params = validateProfileForm();
+					if(params['allowOrNot'] == 0){
+						//Change their information
+						delete params["allowOrNot"];
+						console.log(params);
+						updateUserInfo(params);
+						updateUserObject(params);
+						document.getElementById("emptyProfileField").innerHTML = "";
+					}
+					showHideDiv("profileDIV");
+				});
+				
+				$('#deleteButton').on('click',function(){ 
+					// deleteIt();
+					document.getElementById("emptyProfileField").innerHTML = "";
+					deleteUser()
+					userObject = null;
+					showHideDiv("loginDIV");
+				});
+				
+				$('#gameButton').on('click',function(){ 
+					document.getElementById("emptyProfileField").innerHTML = "";
+					showHideDiv("menuDIV");
+				});
+				
+				$('#logoutPButton').on('click',function(){
+					document.getElementById("emptyProfileField").innerHTML = "";
+					//Delete the user object when they logout.
+					userObject = null;
+					showHideDiv("loginDIV");
+					getTopHighscores();
+				});
+				
+				$('#logoutGButton').on('click',function(){
+					//Delete the user object when they log out.
+					userObject = null;
+					showHideDiv("loginDIV");
+					getTopHighscores();
+				});
+				
+				$('#goToGameButton').on('click',function(){ 
+					showHideDiv("indexDIV");
+				});
+				
+				$('#quitButton').on('click',function(){ 
+					showHideDiv("menuDIV");
+				});
+				
+				$('#backToMenuButton').on('click',function(){ 
+					showHideDiv("menuDIV");
+				});
+
+				$('#backToIndexButton').on('click',function(){ 
+					stopGame();
+					showHideDiv("indexDIV");
+				});
+				
+				$('#pauseButton').on('click',function(){ 
+					pauseGame();
+				});
+				
+				$('#resumeButton').on('click',function(){ 
+					resumeGame();
+				});
+				
+				$('#playButton').on('click', function(){
+					showHideDivPairs("gameDIV");
+					setupGame();
+					startGame();
+				});
+				
+				
+			});
+		</script>
+
+	</head>
+	<body>
+		<div id="loginDIV">
+			<center>	
+				<h1>Warehouse Wars Login</h1>
+				<form id="loginForm">
+					<table>
+						<tr><td>Username: <input type="text" id="userLName"></td></tr>
+						<tr><td>Password: <input type="password" id="userLPass"></td></tr>
+						<tr><td><center><input id="loginButton" type="button" value="Login"></center></td></tr>
+						<tr><td><center><input id="goToRegisterFormButton" type="button" value="Register"></center></td></tr>
+					</table>
+				</form>
+				<form id="emptyLogin"></form>
+				<h2>High Scores:</h2>
+				<form id="highScores">
+					<table id="mainPageTable"></table>
+				</form>
+			</center>
+		</div>
+
+	<div id="registerDIV">
+		<center>
+			<h1>Warehouse Wars Register</h1>
+			<form id="registerForm"> 
+				<table>
+					<tr><td>Username: <input type="text" id="userRName" ></td></tr> 
+					<tr><td>Password: <input type="password" id="userRPass" ></td></tr> 
+					<tr><td>Confirm Password: <input type="password" id="confirmUserRPass"></td></tr> 
+					<tr><td>First Name: <input type="text" id="rFirstName"></td></tr> 
+					<tr><td>Last Name: <input type="text" id="rLastName"></td></tr> 
+					<tr><td>Email: <input type="email" id="rEmail"></td></tr>
+					<tr><td>Confirm Email: <input type="email" id="rConfirmEmail"></td></tr> 
+					<tr><td><center> <input id="registerButton" type="button" value="Register" ></center></td></tr>
+					<tr><td><center><input id="backButton" type="button" value="Back" ></center></td></tr>
+				</table>
+			</form>
+			<form id="emptyRegisterField"></form>
+		</center>
+	</div>
+
+	<div id="profileDIV">
+		<center>	
+			<h1>Warehouse Wars Profile</h1>
+			<form id="profileForm">
+				<table>
+					<tr><td>Username: <input type="text" id="userPName" ></td></tr>
+					<tr><td>Password: <input type="password" id="userPPass" ></td></tr>
+					<tr><td>Confirm Password: <input type="password" id="confirmUserPPass"></td></tr>
+					<tr><td>First Name: <input type="text" id="pFirstName"></td></tr>
+					<tr><td>Last Name: <input type="text" id="pLastName"></td></tr>
+					<tr><td>Email: <input type="email" id="pEmail"></td></tr>
+					<tr><td><center><input id="updateButton" type="button" value="Update" ></center></td></tr>
+					<tr><td><center><input id="gameButton" type="button" value="Warehouse War Game" ></center></td></tr>
+					<tr><td><center><input id="deleteButton" type="button" value="Delete your Account" ></center></td></tr>
+					<tr><td><center><input id="logoutPButton" type="button" value="Logout" ></center></td></tr>
+				</table>
+			</form>
+			<form id="emptyProfileField"> </form>
+		</center>
+	</div>
+
+	<div id="menuDIV">
+		<center>
+			<h1>Main Menu</h1>
+			<form id="menuForm">
+				<table>
+					<tr><td><center><input id="goToGameButton" type="button" value="Set up Warehouse Wars" ></center></td></tr>
+					<tr><td><center><input id="profileButton" type="button" value="Update your Profile" ></center></td></tr>
+					<tr><td><center><input id="logoutGButton" type="button" value="Logout" ></center></td></tr>
+				</table>
+			</form>
+		</center>
+	</div>
+
+	<div id="indexDIV">
+		<center>
+			<h1>Warehouse Wars</h1>
+			<h2>Options</h2>
+			<form id="optionsForm">
+				<table class="options" id="optionsTable">
+					<tr><th>Note: Invalid or ludicrous values are automatically adjusted.</th></tr>
+					<tr><td>Dimensions: <br><input type="number" id="setupDimensions" value="10" min="5" max="50"></td></tr>
+					<tr><td>Number of Monsters: <br><input type="number" id="setupMonsters" value="5"></td></tr>
+					<tr><td>Number of Mega Monsters: <br><input type="number" id="setupMegaMonsters" value="1"></td></tr>
+					<tr><td>Number of Mimic Monsters: <br><input type="number" id="setupMimicMonsters" value="1"></td></tr>
+					<tr><td>Boxes: <br><input type="number" id="setupBoxes" value="50"></td></tr>
+					<tr><td><input id="playButton" type="button" value="Play Warehouse Wars"></td></tr>
+					<tr><td><input id="backToMenuButton" type="button" value="Back to Menu"></td></tr>
+				</table>
+			</form>
+			<h2>Controls</h2>
+			Use the numpad, arrow keys, or click on the icons below:
+			<table class="controls" id="controlsTable">
+				<tr>
+					<td><img src="icons/north_west.svg" ></td>
+					<td><img src="icons/north.svg" ></td>
+					<td><img src="icons/north_east.svg" ></td>
+				</tr>
+				<tr>
+					<td><img src="icons/west.svg" ></td>
+					<td>&nbsp;</td>
+					<td><img src="icons/east.svg" ></td>
+				</tr>
+				<tr>
+					<td><img src="icons/south_west.svg" ></td>
+					<td><img src="icons/south.svg" ></td>
+					<td><img src="icons/south_east.svg" ></td>
+				</tr>
+			</table>
+			<h2>Legend</h2>
+			<table class="legend" id="legendTable">
+				<tr><td><img src="icons/blank.gif" id="blankImage" ></td><td>Empty</td></tr>
+				<tr><td><img src="icons/box.png" id="boxImage" ></td><td>Box</td></tr>
+				<tr><td><img src="icons/player.png" id="playerImage" ></td><td>Player</td></tr>
+				<tr><td><img src="icons/monster.png" id="monsterImage" ></td><td>Monster</td></tr>
+				<tr><td><img src="icons/megaMonster.png" id="megaMonsterImage" ></td><td>Mega Monster</td></tr>
+				<tr><td><img src="icons/mimicMonster.png" id="mimicMonsterImage" ></td><td>Mimic Monster</td></tr>
+				<tr><td><img src="icons/wall.png" id="wallImage"></td><td>Wall</td></tr>
+			</table>
+		</center>
+	</div>
+
+	<div id="gameDIV">
+		<center>
+			<h1>Warehouse Wars</h1>
+			<table>
+				<tr><td><div id="stage"></div></td> 
+					<td>
+						<center>
+							<table id="userInterface">
+								<tr><td>Current Time: <input size="50" type="number" id="currentTime" readonly></td></tr>
+								<tr><td>Current Score: <input size="50" type="number" id="currentScore" readonly></td></tr>
+								<tr><td>Current Status: <input size="50" type="string" id="currentStatus" readonly></td></tr>
+								<tr><td><center><input id="pauseButton" type="button" value="Pause" ><input id="resumeButton" type="button" value="Resume" ></center></td></tr>
+								<tr><td><center><input id="backToIndexButton" type="button" value="Quit to Menu" ></center></td></tr>
+							</table>
+							<h2>Controls</h2>
+							<table class="controls" id="controlsTable">
+								<tr>
+									<td><img src="icons/north_west.svg" id="northwest"></td>
+									<td><img src="icons/north.svg" id="north"></td>
+									<td><img src="icons/north_east.svg" id="northeast"></td>
+								</tr>
+								<tr>
+									<td><img src="icons/west.svg" id="west"></td>
+									<td>&nbsp;</td>
+									<td><img src="icons/east.svg" id="east"></td>
+								</tr>
+								<tr>
+									<td><img src="icons/south_west.svg" id="southwest"></td>
+									<td><img src="icons/south.svg" id="south"></td>
+									<td><img src="icons/south_east.svg" id="southeast"></td>
+								</tr>
+							</table>
+							<h2>Legend</h2>
+							<table class="legend" id="legendTable">
+								<tr><td><img src="icons/blank.gif" id="blankImage" ></td><td>Empty</td></tr>
+								<tr><td><img src="icons/box.png" id="boxImage" ></td><td>Box</td></tr>
+								<tr><td><img src="icons/player.png" id="playerImage" ></td><td>Player</td></tr>
+								<tr><td><img src="icons/monster.png" id="monsterImage" ></td><td>Monster</td></tr>
+								<tr><td><img src="icons/megaMonster.png" id="megaMonsterImage" ></td><td>Mega Monster</td></tr>
+								<tr><td><img src="icons/mimicMonster.png" id="mimicMonsterImage" ></td><td>Mimic Monster</td></tr>
+								<tr><td><img src="icons/wall.png" id="wallImage"></td><td>Wall</td></tr>
+							</table>
+						</center>
+					</td>
+				</tr>
+			</table>
+		</center>
+	</div>
+
+	</body>
+</html>
